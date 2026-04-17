@@ -17,6 +17,7 @@ import { apiLimiter } from './middlewares/security.middleware';
 import { wafMiddleware } from './middlewares/waf.middleware';
 import { crawlerGuard } from './middlewares/crawler.middleware';
 import { logger } from './config/logger';
+import { env } from './config/env';
 
 const app = express();
 
@@ -27,7 +28,12 @@ app.use(
     crossOriginResourcePolicy: { policy: 'cross-origin' }
   })
 );
-app.use(cors());
+app.use(
+  cors({
+    origin: env.corsOrigin === '*' ? true : env.corsOrigin.split(',').map((item) => item.trim()),
+    credentials: true
+  })
+);
 app.use(express.json({ limit: '1mb' }));
 app.use(apiLimiter);
 app.use(wafMiddleware);

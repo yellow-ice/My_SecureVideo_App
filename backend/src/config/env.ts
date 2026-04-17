@@ -6,6 +6,7 @@ export const env = {
   port: Number(process.env.PORT ?? 3000),
   jwtSecret: process.env.JWT_SECRET ?? 'change-me',
   redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  corsOrigin: process.env.CORS_ORIGIN ?? '*',
   nodeEnv: process.env.NODE_ENV ?? 'development',
   disableBruteforce:
     String(process.env.DISABLE_BRUTEFORCE ?? '').trim().toLowerCase() === '1' ||
