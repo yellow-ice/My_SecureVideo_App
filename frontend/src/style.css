@@ -1,0 +1,77 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  /* 清爽浅色：参考 B 站的留白与蓝色强调 */
+  --bg: #f6f7f9;
+  --bg-elevated: #ffffff;
+  --bg-elevated-2: #f9fafb;
+  --text: #1f2328;
+  --muted: #6b7280;
+  --line: rgba(15, 23, 42, 0.12);
+  --accent: #00a1d6;
+  --accent-2: #2b6cff;
+  --accent-soft: rgba(0, 161, 214, 0.12);
+  --danger: #ef4444;
+  --warn: #f59e0b;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+/* Element Plus：弱化默认「白盒子」感 */
+.el-card {
+  --el-card-bg-color: #fff;
+  --el-card-border-color: var(--line);
+  border-radius: 10px;
+}
+
+.el-input__wrapper {
+  background: #fff !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(15, 23, 42, 0.14) !important;
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--accent);
+  --el-button-border-color: var(--accent);
+  --el-button-text-color: #fff;
+  --el-button-hover-bg-color: #0bb0e8;
+  --el-button-hover-border-color: #0bb0e8;
+}
+
+/* 页面区块：用留白与分割线，少用边框盒子 */
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 14px;
+}
+
+.link-quiet {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+}
+.link-quiet:hover {
+  color: var(--accent);
+}

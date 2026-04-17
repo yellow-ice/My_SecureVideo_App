@@ -1,0 +1,372 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+enum VideoStatus {
+  published
+  draft
+  blocked
+}
+
+enum CategoryStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ContentType {
+  video
+  image
+  article
+}
+
+enum ContentStatus {
+  pending
+  published
+  rejected
+}
+
+enum NotificationType {
+  reply
+  mention
+  favorite
+  system
+}
+
+enum FriendRequestStatus {
+  pending
+  accepted
+  rejected
+}
+
+enum Severity {
+  high
+  medium
+  low
+}
+
+enum AttackStatus {
+  detected
+  blocked
+  ignored
+}
+
+enum LogLevel {
+  info
+  warn
+  error
+}
+
+model User {
+  id              Int              @id @default(autoincrement())
+  email           String           @unique
+  username        String           @unique
+  password_hash   String
+  role            UserRole         @default(user)
+  avatar          String?
+  bio             String?
+  created_at      DateTime         @default(now())
+  last_login      DateTime?
+  status          UserStatus       @default(active)
+  videos          Video[]
+  comments        Comment[]
+  commentRepliesReceived Comment[] @relation("CommentReplyToUser")
+  categoriesCreated Category[] @relation("CategoryCreator")
+  categoriesReviewed Category[] @relation("CategoryReviewer")
+  contents        Content[]
+  contentComments ContentComment[]
+  contentCommentRepliesReceived ContentComment[] @relation("ContentCommentReplyToUser")
+  likes           ContentLike[]
+  favoriteFolders FavoriteFolder[]
+  notifications   Notification[]
+  sentFriendRequests FriendRequest[] @relation("FriendRequestSender")
+  receivedFriendRequests FriendRequest[] @relation("FriendRequestReceiver")
+  friendshipsLow  Friendship[]      @relation("FriendshipLow")
+  friendshipsHigh Friendship[]      @relation("FriendshipHigh")
+  chatMessages    ChatMessage[]
+  permissions     UserPermission[]
+}
+
+model Video {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  url         String
+  cover_url   String?
+  user_id     Int
+  category    String
+  views       Int        @default(0)
+  likes       Int        @default(0)
+  created_at  DateTime   @default(now())
+  duration    Int
+  status      VideoStatus @default(draft)
+  user        User       @relation(fields: [user_id], references: [id])
+  comments    Comment[]
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  video_id   Int
+  user_id    Int
+  content    String
+  parent_id  Int?
+  reply_to_user_id Int?
+  created_at DateTime @default(now())
+
+  video Video @relation(fields: [video_id], references: [id])
+  user  User  @relation(fields: [user_id], references: [id])
+  parent Comment? @relation("CommentReplies", fields: [parent_id], references: [id])
+  replies Comment[] @relation("CommentReplies")
+  replyToUser User? @relation("CommentReplyToUser", fields: [reply_to_user_id], references: [id])
+
+  @@index([video_id, created_at])
+  @@index([user_id, created_at])
+  @@index([parent_id, created_at])
+}
+
+model Category {
+  id            Int            @id @default(autoincrement())
+  name          String
+  slug          String         @unique
+  description   String?
+  status        CategoryStatus @default(approved)
+  request_count Int            @default(0)
+  last_used_at  DateTime?
+  creator_id    Int
+  reviewed_by   Int?
+  reviewed_at   DateTime?
+  created_at    DateTime       @default(now())
+
+  creator       User           @relation("CategoryCreator", fields: [creator_id], references: [id])
+  reviewer      User?          @relation("CategoryReviewer", fields: [reviewed_by], references: [id])
+  contents      Content[]
+}
+
+model Content {
+  id            Int          @id @default(autoincrement())
+  type          ContentType
+  status        ContentStatus @default(pending)
+  title         String
+  summary       String?      @db.Text
+  body          String?      @db.LongText
+  cover_url     String?
+  media_url     String?
+  category_id   Int
+  author_id     Int
+  views         Int          @default(0)
+  reviewed_by   Int?
+  reviewed_at   DateTime?
+  reject_reason String?
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  category      Category     @relation(fields: [category_id], references: [id])
+  author        User         @relation(fields: [author_id], references: [id])
+  likes         ContentLike[]
+  favoriteItems FavoriteItem[]
+  comments      ContentComment[]
+  tags          ContentTag[]
+
+  @@index([status, created_at])
+  @@index([author_id, status, created_at])
+}
+
+model Tag {
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
+  slug       String       @unique
+  created_at DateTime     @default(now())
+  contents   ContentTag[]
+}
+
+model ContentTag {
+  content_id Int
+  tag_id     Int
+  created_at DateTime @default(now())
+
+  content    Content  @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([content_id, tag_id])
+  @@index([tag_id, created_at])
+}
+
+model ContentLike {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  content_id    Int
+  created_at    DateTime @default(now())
+
+  user          User     @relation(fields: [user_id], references: [id])
+  content       Content  @relation(fields: [content_id], references: [id])
+
+  @@unique([user_id, content_id])
+}
+
+model FavoriteFolder {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  name          String
+  is_default    Boolean  @default(false)
+  created_at    DateTime @default(now())
+
+  user          User     @relation(fields: [user_id], references: [id])
+  items         FavoriteItem[]
+
+  @@unique([user_id, name])
+}
+
+model FavoriteItem {
+  id            Int      @id @default(autoincrement())
+  folder_id     Int
+  content_id    Int
+  created_at    DateTime @default(now())
+
+  folder        FavoriteFolder @relation(fields: [folder_id], references: [id])
+  content       Content        @relation(fields: [content_id], references: [id])
+
+  @@unique([folder_id, content_id])
+}
+
+model Notification {
+  id            Int              @id @default(autoincrement())
+  user_id       Int
+  type          NotificationType
+  title         String
+  body          String?
+  is_read       Boolean          @default(false)
+  related_type  String?
+  related_id    Int?
+  created_at    DateTime         @default(now())
+
+  user          User             @relation(fields: [user_id], references: [id])
+
+  @@index([user_id, is_read, created_at])
+}
+
+model ContentComment {
+  id              Int      @id @default(autoincrement())
+  content_id      Int
+  user_id         Int
+  comment_text    String
+  parent_id       Int?
+  reply_to_user_id Int?
+  created_at      DateTime @default(now())
+
+  content         Content  @relation(fields: [content_id], references: [id])
+  user            User     @relation(fields: [user_id], references: [id])
+  parent          ContentComment? @relation("ContentCommentReplies", fields: [parent_id], references: [id])
+  replies         ContentComment[] @relation("ContentCommentReplies")
+  replyToUser     User?    @relation("ContentCommentReplyToUser", fields: [reply_to_user_id], references: [id])
+
+  @@index([content_id, created_at])
+  @@index([parent_id, created_at])
+}
+
+model FriendRequest {
+  id            Int                 @id @default(autoincrement())
+  sender_id     Int
+  receiver_id   Int
+  message       String?
+  status        FriendRequestStatus @default(pending)
+  created_at    DateTime            @default(now())
+  handled_at    DateTime?
+
+  sender        User                @relation("FriendRequestSender", fields: [sender_id], references: [id])
+  receiver      User                @relation("FriendRequestReceiver", fields: [receiver_id], references: [id])
+
+  @@index([receiver_id, status, created_at])
+  @@index([sender_id, status, created_at])
+}
+
+model Friendship {
+  id            Int      @id @default(autoincrement())
+  user_low_id   Int
+  user_high_id  Int
+  created_at    DateTime @default(now())
+
+  userLow       User     @relation("FriendshipLow", fields: [user_low_id], references: [id])
+  userHigh      User     @relation("FriendshipHigh", fields: [user_high_id], references: [id])
+  messages      ChatMessage[]
+
+  @@unique([user_low_id, user_high_id])
+}
+
+model ChatMessage {
+  id            Int      @id @default(autoincrement())
+  friendship_id Int
+  sender_id     Int
+  content       String
+  is_read       Boolean  @default(false)
+  created_at    DateTime @default(now())
+
+  friendship    Friendship @relation(fields: [friendship_id], references: [id])
+  sender        User       @relation(fields: [sender_id], references: [id])
+
+  @@index([friendship_id, created_at])
+}
+
+model AttackLog {
+  id                Int         @id @default(autoincrement())
+  attack_type       String
+  ip_address        String
+  user_agent        String?
+  path              String
+  payload           String?
+  severity          Severity
+  created_at        DateTime    @default(now())
+  mitigation_action String?
+  status            AttackStatus @default(detected)
+}
+
+model SecurityEvent {
+  id            Int      @id @default(autoincrement())
+  event_type    String
+  description   String
+  risk_score    Int
+  source_ip     String
+  affected_user String?
+  timestamp     DateTime @default(now())
+  resolved      Boolean  @default(false)
+}
+
+model SystemLog {
+  id         Int      @id @default(autoincrement())
+  level      LogLevel
+  module     String
+  message    String
+  user_id    Int?
+  ip_address String?
+  timestamp  DateTime @default(now())
+}
+
+model Permission {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String
+  users       UserPermission[]
+}
+
+model UserPermission {
+  user_id       Int
+  permission_id Int
+  user          User       @relation(fields: [user_id], references: [id])
+  permission    Permission @relation(fields: [permission_id], references: [id])
+
+  @@id([user_id, permission_id])
+}

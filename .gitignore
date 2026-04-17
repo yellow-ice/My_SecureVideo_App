@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+**/node_modules/
+
+# environment files
+.env
+.env.*
+!.env.example
+
+# uploads and generated media
+uploads/
+**/uploads/
+
+# build artifacts
+dist/
+build/
+**/dist/
+**/build/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Python virtual env / cache
+.venv/
+__pycache__/
+*.pyc
+
+# generated security tester outputs
+tools/authorized_security_tester/output/
+tools/authorized_security_tester/output_auto/
