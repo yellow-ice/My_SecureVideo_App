@@ -28,7 +28,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const normalizedEmail = String(email ?? '').trim().toLowerCase();
   const ip = req.ip ?? 'unknown';
   const loginKey = `${ip}:${normalizedEmail || 'unknown'}`;
+  // #region agent log
+  fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'pre-fix-login',hypothesisId:'H1-H4',location:'src/controllers/auth.controller.ts:31',message:'Login request received',data:{ip,hasEmail:Boolean(normalizedEmail),hasPassword:Boolean(password)},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   const policy = canAttemptLogin(loginKey);
+  // #region agent log
+  fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'pre-fix-login',hypothesisId:'H2-H4',location:'src/controllers/auth.controller.ts:35',message:'Login policy evaluated',data:{allowed:policy.allowed,retryAfterSec:policy.retryAfterSec ?? 0},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   if (!policy.allowed) {
     emitSecurityEvent({
       type: 'bruteforce',
@@ -41,6 +47,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     return;
   }
   const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  // #region agent log
+  fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'pre-fix-login',hypothesisId:'H3-H4',location:'src/controllers/auth.controller.ts:49',message:'User lookup result',data:{userFound:Boolean(user)},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
     const fail = registerFailedLogin(loginKey);
     if (fail.locked) {
@@ -56,6 +65,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       });
     }
     res.status(401).json({ message: 'Invalid credentials' });
+    // #region agent log
+    fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'pre-fix-login',hypothesisId:'H3',location:'src/controllers/auth.controller.ts:67',message:'Login rejected',data:{reason:'invalid_credentials_or_password_mismatch'},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     return;
   }
   if (user.status !== 'active') {
@@ -66,6 +78,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, env.jwtSecret, { expiresIn: '7d' });
   await prisma.user.update({ where: { id: user.id }, data: { last_login: new Date() } });
   res.json({ token, user: { id: user.id, email: user.email, username: user.username, role: user.role, avatar: user.avatar } });
+  // #region agent log
+  fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'pre-fix-login',hypothesisId:'H5',location:'src/controllers/auth.controller.ts:80',message:'Login success',data:{userId:user.id,role:user.role},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
 };
 
 export const demoAccounts = async (_req: Request, res: Response): Promise<void> => {
