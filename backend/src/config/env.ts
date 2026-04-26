@@ -11,6 +11,9 @@ export const env = {
   disableBruteforce:
     String(process.env.DISABLE_BRUTEFORCE ?? '').trim().toLowerCase() === '1' ||
     String(process.env.DISABLE_BRUTEFORCE ?? '').trim().toLowerCase() === 'true',
+  enableDemoAccountSync:
+    String(process.env.ENABLE_DEMO_ACCOUNT_SYNC ?? '').trim().toLowerCase() === '1' ||
+    String(process.env.ENABLE_DEMO_ACCOUNT_SYNC ?? '').trim().toLowerCase() === 'true',
   demoAdminEmail: process.env.DEMO_ADMIN_EMAIL ?? 'admin@securevideo.com',
   demoAdminPassword: process.env.DEMO_ADMIN_PASSWORD ?? 'Admin@123456',
   demoUserEmail: process.env.DEMO_USER_EMAIL ?? 'user@securevideo.com',

@@ -11,14 +11,13 @@ const bootstrap = async (): Promise<void> => {
   fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'pre-fix',hypothesisId:'H1-H5',location:'src/server.ts:10',message:'Bootstrap start',data:{port:env.port,hasRedisUrl:Boolean(env.redisUrl)},timestamp:Date.now()})}).catch(()=>{});
   // #endregion
   try {
-    await ensureDemoAccounts();
-    // #region agent log
-    fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'post-fix-demo-accounts',hypothesisId:'H1-H4',location:'src/server.ts:15',message:'ensureDemoAccounts finished',data:{ok:true},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-  } catch (error) {
-    // #region agent log
-    fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'post-fix-demo-accounts',hypothesisId:'H1-H4',location:'src/server.ts:20',message:'ensureDemoAccounts failed',data:{name:error instanceof Error ? error.name : 'unknown',message:error instanceof Error ? error.message : 'unknown'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
+    if (env.enableDemoAccountSync) {
+      await ensureDemoAccounts();
+      logger.info('Demo account sync enabled and completed');
+    } else {
+      logger.info('Demo account sync disabled');
+    }
+  } catch {
     logger.warn('Ensuring demo accounts failed');
   }
   try {
