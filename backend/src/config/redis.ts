@@ -13,7 +13,7 @@ redis.on('error', (error) => {
   // #endregion
 });
 
-redis.on('reconnecting', (time) => {
+redis.on('reconnecting', (time: number) => {
   // #region agent log
   fetch('http://127.0.0.1:7763/ingest/f7634983-5a77-4a9d-a744-81ae45180aea',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'1a4728'},body:JSON.stringify({sessionId:'1a4728',runId:'pre-fix',hypothesisId:'H2-H4',location:'src/config/redis.ts:18',message:'Redis reconnecting',data:{nextRetryDelayMs:time},timestamp:Date.now()})}).catch(()=>{});
   // #endregion
